@@ -1,0 +1,1 @@
+// Serviço para chamada à API do Kanbanize
