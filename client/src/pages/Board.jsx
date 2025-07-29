@@ -99,10 +99,19 @@ export default function Board() {
   const availableAssignees = useMemo(() => {
     const assignees = new Set();
     cards.forEach(card => {
-      const assignee = card.reporter?.value || card.owner_user_id || 'Não atribuído';
-      assignees.add(assignee);
+      if (card.owner_user_id) {
+        assignees.add(card.owner_user_id);
+      }
+      if (card.co_owner_ids) {
+        card.co_owner_ids.forEach(id => assignees.add(id));
+      }
     });
-    return Array.from(assignees).sort();
+    return Array.from(assignees).sort((a, b) => {
+      if (typeof a === 'number' && typeof b === 'number') {
+        return a - b;
+      }
+      return String(a).localeCompare(String(b));
+    });
   }, [cards]);
 
   // Cards filtrados
@@ -114,8 +123,8 @@ export default function Board() {
       
       const matchesPriority = !priorityFilter || card.priority === priorityFilter;
       
-      const assignee = card.reporter?.value || card.owner_user_id || 'Não atribuído';
-      const matchesAssignee = !assigneeFilter || assignee === assigneeFilter;
+      const allAssignees = [card.owner_user_id, ...(card.co_owner_ids || [])];
+      const matchesAssignee = !assigneeFilter || allAssignees.includes(Number(assigneeFilter));
       
       return matchesSearch && matchesPriority && matchesAssignee;
     });

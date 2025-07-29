@@ -57,7 +57,7 @@ export default function CardDetailsModal({ card, onClose }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <DetailItem label="ID Customizado" value={custom_id} />
           <DetailItem label="Tipo" value={type?.value} />
-          <DetailItem label="Proprietário (ID)" value={owner_user_id} />
+          <DetailItem label="Responsáveis (IDs)" value={[owner_user_id, ...(co_owner_ids || [])].filter(id => id != null).join(', ')} />
           <DetailItem label="Prazo Final" value={formatDate(deadline)} />
           <DetailItem label="Criado em" value={formatDate(created_at)} />
           <DetailItem label="Última Modificação" value={formatDate(last_modified)} />

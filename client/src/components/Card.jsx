@@ -19,11 +19,22 @@ const getPriorityColor = (priority) => {
   return priorityColors[priority] || 'bg-blue-100 text-blue-800 border-blue-200';
 };
 
-// Função para obter iniciais do nome
-const getInitials = (name) => {
-  if (!name) return '?';
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+// Função para obter iniciais ou ID do responsável
+const getIdentifier = (assignee) => {
+  if (!assignee) return '?';
+  // Se for um número (ID), formata. Caso contrário, pega as iniciais.
+  if (typeof assignee === 'number') {
+    return `#${assignee}`;
+  }
+  return assignee.toString().split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 };
+
+// Componente para o avatar de um responsável
+const AssigneeAvatar = ({ assignee }) => (
+  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xs font-semibold text-gray-700 border-2 border-white">
+    {getIdentifier(assignee)}
+  </div>
+);
 
 export default function Card({ card, onClick }) {
   const {
@@ -31,9 +42,9 @@ export default function Card({ card, onClick }) {
     description,
     color,
     priority,
-    reporter,
     created_at,
     owner_user_id,
+    co_owner_ids,
     current_cycle_time
   } = card;
 
@@ -42,7 +53,11 @@ export default function Card({ card, onClick }) {
     borderLeft: `5px solid ${color || '#ccc'}`,
   };
 
-  const assigneeName = reporter?.value || owner_user_id || 'Não atribuído';
+  // Junta o proprietário principal e os co-proprietários
+  const allAssignees = [owner_user_id, ...(co_owner_ids || [])].filter(id => id != null);
+  const displayAssignees = allAssignees.slice(0, 3);
+  const remainingCount = allAssignees.length - displayAssignees.length;
+
   const priorityColorClass = getPriorityColor(priority);
 
   return (
@@ -51,11 +66,19 @@ export default function Card({ card, onClick }) {
       style={cardStyle}
       onClick={() => onClick(card)}
     >
-      {/* Cabeçalho com título e avatar */}
+      {/* Cabeçalho com título e avatares */}
       <div className="flex justify-between items-start mb-2">
         <h3 className="font-bold text-md flex-1 mr-2 line-clamp-2">{title}</h3>
-        <div className="flex-shrink-0 w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xs font-semibold text-gray-700">
-          {getInitials(assigneeName)}
+        <div className="flex flex-shrink-0 -space-x-3">
+          {displayAssignees.map((assignee, index) => (
+            <AssigneeAvatar key={index} assignee={assignee} />
+          ))}
+          {remainingCount > 0 && (
+            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-xs font-semibold text-white border-2 border-white">
+              +{remainingCount}
+            </div>
+          )}
+          {allAssignees.length === 0 && <AssigneeAvatar assignee={null} />}
         </div>
       </div>
 
@@ -82,7 +105,9 @@ export default function Card({ card, onClick }) {
 
       {/* Rodapé com responsável e data */}
       <div className="flex justify-between items-center text-xs text-gray-500">
-        <span className="truncate flex-1 mr-2">{assigneeName}</span>
+        <span className="truncate flex-1 mr-2">
+          {allAssignees.length > 0 ? `IDs: ${allAssignees.join(', ')}` : 'Não atribuído'}
+        </span>
         <span className="flex-shrink-0">{formatDate(created_at)}</span>
       </div>
     </div>
