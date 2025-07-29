@@ -1,6 +1,6 @@
 
 const API_URL_CARDS = 'https://kagestor-webapp-api.onrender.com/api/cards';
-const API_URL_USERS = 'https://cnc.kanbanize.com/api/v2/users/';
+const API_URL_USERS = '/api/users';
 
 export async function getCards() {
   try {
