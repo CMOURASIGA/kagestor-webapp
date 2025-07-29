@@ -1,34 +1,40 @@
-require('dotenv').config();
 const express = require('express');
-const fetch = require('node-fetch');
+const axios = require('axios');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Libera acesso CORS para seu frontend
-app.use(cors({
-  origin: '*', // Se quiser limitar, substitua por: 'https://kagestor-webapp.onrender.com'
-}));
+// Configurações da API do Kanbanize
+const KANBANIZE_API_BASE = process.env.KANBANIZE_API_BASE || 'https://cnc.kanbanize.com/api/v2';
+const KANBANIZE_API_TOKEN = process.env.KANBANIZE_API_TOKEN;
+
+// Middleware CORS
+app.use(cors());
+app.use(express.json());
 
 // Endpoint para buscar cards
 app.get('/api/cards', async (req, res) => {
   try {
-    const response = await fetch('https://cnc.kanbanize.com/api/v2/boards/1/workflows/2/cards?expand=details,custom_fields,comments,stickers,tags', {
+    const response = await axios.get(`${KANBANIZE_API_BASE}/boards/1/workflows/2/items`, {
       headers: {
         accept: 'application/json',
-        apikey: process.env.KANBANIZE_API_TOKEN
+        apikey: KANBANIZE_API_TOKEN
+      },
+      params: {
+        expand: 'fields'
       }
     });
 
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'Erro ao buscar cards do Kanbanize' });
-    }
-
-    const data = await response.json();
-    res.json(data);
+    const cards = response.data.items || [];
+    res.json(cards);
   } catch (error) {
-    console.error('Erro no endpoint /api/cards:', error);
+    console.error('❌ Erro ao buscar cards Kanbanize:', error.message);
+    if (error.response) {
+      console.error('↳ Status:', error.response.status);
+      console.error('↳ Data:', error.response.data);
+    }
     res.status(500).json({ error: 'Erro no servidor ao buscar cards' });
   }
 });
@@ -36,25 +42,29 @@ app.get('/api/cards', async (req, res) => {
 // Endpoint para buscar usuários
 app.get('/api/users', async (req, res) => {
   try {
-    const response = await fetch('https://cnc.kanbanize.com/api/v2/users/', {
+    const response = await axios.get(`${KANBANIZE_API_BASE}/users/`, {
       headers: {
         accept: 'application/json',
-        apikey: process.env.KANBANIZE_API_TOKEN
+        apikey: KANBANIZE_API_TOKEN
       }
     });
 
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'Erro ao buscar usuários do Kanbanize' });
-    }
+    const users = response.data.users.map(user => ({
+      id: user.user_id,
+      name: user.username
+    }));
 
-    const data = await response.json();
-    res.json(data);
+    res.json(users);
   } catch (error) {
-    console.error('Erro no endpoint /api/users:', error);
+    console.error('❌ Erro ao buscar usuários Kanbanize:', error.message);
+    if (error.response) {
+      console.error('↳ Status:', error.response.status);
+      console.error('↳ Data:', error.response.data);
+    }
     res.status(500).json({ error: 'Erro no servidor ao buscar usuários' });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor backend rodando na porta ${PORT}`);
 });
