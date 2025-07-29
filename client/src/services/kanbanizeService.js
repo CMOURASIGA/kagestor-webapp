@@ -1,27 +1,26 @@
-export async function getCards() {
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+async function getCards() {
   try {
-    const response = await fetch('/api/cards');
-    if (!response.ok) {
-      throw new Error('Erro ao buscar cards');
-    }
-    const data = await response.json();
-    return data.cards || []; // garante que vem array
+    const response = await axios.get(`${API_BASE_URL}/api/cards`);
+    return response.data?.data || []; // garantir que seja um array
   } catch (error) {
-    console.error('❌ Erro ao buscar dados da API:', error);
+    console.error('Erro ao buscar cards:', error);
     return [];
   }
 }
 
-export async function getUsuarios() {
+async function getUsers() {
   try {
-    const response = await fetch('/api/users');
-    if (!response.ok) {
-      throw new Error('Erro ao buscar usuários');
-    }
-    const usuarios = await response.json();
-    return usuarios;
+    const response = await axios.get(`${API_BASE_URL}/api/users`);
+    return response.data?.data || [];
   } catch (error) {
-    console.error('❌ Erro ao buscar usuários da API:', error);
+    console.error('Erro ao buscar usuários:', error);
     return [];
   }
 }
+
+// ✅ Exportações necessárias
+export { getCards, getUsers };
