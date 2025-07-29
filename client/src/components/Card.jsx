@@ -1,12 +1,1 @@
-import React from 'react';
-
-const Card = ({ card }) => {
-  return (
-    <div className="bg-white shadow rounded p-3 mb-2">
-      <h3 className="text-sm font-semibold">{card.title}</h3>
-      <p className="text-xs text-gray-500">{card.description}</p>
-    </div>
-  );
-};
-
-export default Card;
+import React from 'react'; export default function Card({ card }) { return (<div className='bg-white p-2 rounded shadow mb-2'><h3 className='font-semibold'>{card.title}</h3><p className='text-sm text-gray-500'>{card.description?.substring(0, 80)}...</p></div>); }
