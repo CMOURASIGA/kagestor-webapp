@@ -1,70 +1,44 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+
 require('dotenv').config();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
-// Configurações da API do Kanbanize
-const KANBANIZE_API_BASE = process.env.KANBANIZE_API_BASE || 'https://cnc.kanbanize.com/api/v2';
-const KANBANIZE_API_TOKEN = process.env.KANBANIZE_API_TOKEN;
-
-// Middleware CORS
 app.use(cors());
 app.use(express.json());
 
-// Endpoint para buscar cards
 app.get('/api/cards', async (req, res) => {
   try {
-    const response = await axios.get(`${KANBANIZE_API_BASE}/boards/1/workflows/2/items`, {
+    const response = await axios.get('https://cnc.kanbanize.com/api/v2/cards?board_id=1&workflow_id=2', {
       headers: {
-        accept: 'application/json',
-        apikey: KANBANIZE_API_TOKEN
-      },
-      params: {
-        expand: 'fields'
+        apikey: process.env.KANBANIZE_API_TOKEN
       }
     });
 
-    const cards = response.data.items || [];
-    res.json(cards);
+    res.json(response.data);
   } catch (error) {
-    console.error('❌ Erro ao buscar cards Kanbanize:', error.message);
-    if (error.response) {
-      console.error('↳ Status:', error.response.status);
-      console.error('↳ Data:', error.response.data);
-    }
+    console.error('Erro ao buscar cards Kanbanize:', error.message);
     res.status(500).json({ error: 'Erro no servidor ao buscar cards' });
   }
 });
 
-// Endpoint para buscar usuários
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', (req, res) => {
   try {
-    const response = await axios.get(`${KANBANIZE_API_BASE}/users/`, {
-      headers: {
-        accept: 'application/json',
-        apikey: KANBANIZE_API_TOKEN
-      }
-    });
+    const filePath = path.join(__dirname, 'usuarios-fake.json');
+    const data = fs.readFileSync(filePath, 'utf8');
+    const usuarios = JSON.parse(data);
 
-    const users = response.data.users.map(user => ({
-      id: user.user_id,
-      name: user.username
-    }));
-
-    res.json(users);
+    res.json(usuarios);
   } catch (error) {
-    console.error('❌ Erro ao buscar usuários Kanbanize:', error.message);
-    if (error.response) {
-      console.error('↳ Status:', error.response.status);
-      console.error('↳ Data:', error.response.data);
-    }
+    console.error('Erro ao buscar usuários Kanbanize (fake):', error.message);
     res.status(500).json({ error: 'Erro no servidor ao buscar usuários' });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor backend rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
