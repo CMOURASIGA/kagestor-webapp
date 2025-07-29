@@ -6,9 +6,9 @@ import FilterBar from '../components/FilterBar';
 
 // Definição das colunas com base no column_id
 const columnsConfig = {
-  'A Fazer': 88,
-  'Em Andamento': 89,
-  'Concluído': 90,
+  'A Fazer': 6,
+  'Em Andamento': 7,
+  'Concluído': 9,
 };
 
 const LoadingSpinner = () => (
