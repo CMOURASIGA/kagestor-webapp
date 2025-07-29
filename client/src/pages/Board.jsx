@@ -69,11 +69,12 @@ export default function Board() {
     setError(false);
     try {
       const fetchedCards = await getCards();
-      console.log('📊 Cards fetched in Board:', fetchedCards.length);
-      setCards(fetchedCards);
+      console.log('📊 Cards fetched in Board:', fetchedCards?.length);
+      setCards(fetchedCards || []);
     } catch (err) {
       console.error('❌ Error in Board component:', err);
       setError(true);
+      setCards([]);
     } finally {
       setLoading(false);
     }
