@@ -1,9 +1,10 @@
 import React from 'react';
+import Board from './pages/Board';
 
 function App() {
   return (
-    <div>
-      <h1>Kagestor</h1>
+    <div className="bg-gray-200 min-h-screen">
+      <Board />
     </div>
   );
 }
