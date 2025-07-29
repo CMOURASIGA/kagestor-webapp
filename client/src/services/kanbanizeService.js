@@ -1,4 +1,4 @@
-export async function getCardsFromAPI() {
+export async function getCards() {
   try {
     const response = await fetch('/api/cards');
     if (!response.ok) {
