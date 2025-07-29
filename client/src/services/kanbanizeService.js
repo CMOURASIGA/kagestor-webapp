@@ -1,28 +1,37 @@
-const API_URL = 'https://kagestor-webapp-api.onrender.com/api/cards';
 
-/**
- * Busca os cards reais vindos da API Kanbanize (via backend)
- */
+const API_URL_CARDS = 'https://kagestor-webapp-api.onrender.com/api/cards';
+const API_URL_USERS = 'https://cnc.kanbanize.com/api/v2/users/';
+
 export async function getCards() {
   try {
-    const response = await fetch(API_URL);
-    const result = await response.json();
+    const [cardsRes, usersRes] = await Promise.all([
+      fetch(API_URL_CARDS),
+      fetch(API_URL_USERS)
+    ]);
 
-    console.log('🔍 Dados brutos da API:', result);
+    const cardsJson = await cardsRes.json();
+    const usersJson = await usersRes.json();
 
-    // Acessa o array em: result.data.data
-    if (
-      result &&
-      result.data &&
-      Array.isArray(result.data.data)
-    ) {
-      return result.data.data;
+    const userMap = {};
+    if (usersJson?.data) {
+      usersJson.data.forEach(user => {
+        userMap[user.user_id] = user.username;
+      });
     }
 
-    console.warn('⚠️ Estrutura inesperada no retorno da API.');
-    return [];
+    if (!cardsJson?.data?.data) {
+      console.warn("⚠️ Estrutura de cards inválida:", cardsJson);
+      return [];
+    }
+
+    const cards = cardsJson.data.data.map(card => ({
+      ...card,
+      owner_username: userMap[card.owner_user_id] || `ID: ${card.owner_user_id}`
+    }));
+
+    return cards;
   } catch (error) {
-    console.error('❌ Erro ao buscar os cards da API:', error);
+    console.error('❌ Erro ao buscar dados da API:', error);
     return [];
   }
 }
