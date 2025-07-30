@@ -19,6 +19,7 @@ app.get('/api/cards', async (req, res) => {
       }
     });
 
+    console.log('Data from Kanbanize API:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
   } catch (error) {
     console.error('Erro ao buscar cards Kanbanize:', error.message);
