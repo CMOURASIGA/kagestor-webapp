@@ -39,12 +39,27 @@ app.get('/api/cards', async (req, res) => {
       }
     });
 
-    const cardsData = response.data.data;
-
-    if (!Array.isArray(cardsData)) {
-      console.error("A resposta da API Kanbanize não continha um array de 'data'. Resposta recebida:", response.data);
-      return res.json({ data: [] });
+    // Log da estrutura da resposta para depuração
+    console.log('Estrutura da resposta da API Kanbanize:', JSON.stringify(response.data, null, 2));
+    
+    // Extrair dados de forma mais robusta
+    let cardsData = [];
+    
+    if (response.data && response.data.data) {
+      if (Array.isArray(response.data.data)) {
+        cardsData = response.data.data;
+      } else if (response.data.data.data && Array.isArray(response.data.data.data)) {
+        cardsData = response.data.data.data;
+      } else {
+        console.warn('Estrutura de dados inesperada na resposta da API Kanbanize');
+        cardsData = [];
+      }
+    } else {
+      console.warn('Resposta da API Kanbanize não contém dados esperados');
+      cardsData = [];
     }
+
+    console.log(`Número de cards encontrados: ${cardsData.length}`);
 
     const cardsComUsuarios = cardsData.map(card => {
       const usuario = usuarios.find(u => u.id === card.owner_user_id);
