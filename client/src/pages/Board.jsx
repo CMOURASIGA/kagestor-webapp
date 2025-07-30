@@ -68,9 +68,9 @@ export default function Board() {
     setLoading(true);
     setError(false);
     try {
-      const fetchedCards = await getCards();
-      console.log('📊 Cards fetched in Board:', fetchedCards?.length);
-      setCards(fetchedCards || []);
+      const cardsData = await getCards();
+        console.log("Cards fetched in Board:", cardsData);
+        setCards(cardsData || []);
     } catch (err) {
       console.error('❌ Error in Board component:', err);
       setError(true);
