@@ -49,7 +49,7 @@ export default function FilterBar({
           >
             <option value="">Todos os responsáveis</option>
             {availableAssignees.map(assignee => (
-              <option key={assignee} value={assignee}>{assignee}</option>
+              <option key={assignee.id} value={assignee.id}>{assignee.username}</option>
             ))}
           </select>
         </div>

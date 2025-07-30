@@ -58,30 +58,42 @@ export default function Board() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
   
   // Estados dos filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
 
-  const fetchCards = async () => {
+  const fetchData = async () => {
     setLoading(true);
     setError(false);
     try {
-      const cardsData = await getCards();
-        console.log("Cards fetched in Board:", cardsData);
-        setCards(cardsData || []);
+      // Usando Promise.all para buscar dados em paralelo
+      const [cardsData, usersData] = await Promise.all([
+        getCards(),
+        fetch('http://localhost:3001/api/users').then(res => {
+          if (!res.ok) throw new Error('A resposta da rede não foi ok para buscar usuários');
+          return res.json();
+        })
+      ]);
+      
+      console.log("Cards fetched in Board:", cardsData);
+      setCards(cardsData || []);
+      setAllUsers(usersData || []);
+
     } catch (err) {
-      console.error('❌ Error in Board component:', err);
+      console.error('❌ Error fetching data in Board component:', err);
       setError(true);
       setCards([]);
+      setAllUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCards();
+    fetchData();
   }, []);
 
   const handleCardClick = (card) => {
@@ -93,27 +105,11 @@ export default function Board() {
   };
 
   const handleRetry = () => {
-    fetchCards();
+    fetchData();
   };
 
   // Filtros e responsáveis disponíveis
-  const availableAssignees = useMemo(() => {
-    const assignees = new Set();
-    cards.forEach(card => {
-      if (card.owner_user_id) {
-        assignees.add(card.owner_user_id);
-      }
-      if (card.co_owner_ids) {
-        card.co_owner_ids.forEach(id => assignees.add(id));
-      }
-    });
-    return Array.from(assignees).sort((a, b) => {
-      if (typeof a === 'number' && typeof b === 'number') {
-        return a - b;
-      }
-      return String(a).localeCompare(String(b));
-    });
-  }, [cards]);
+  const availableAssignees = allUsers;
 
   // Cards filtrados
   const filteredCards = useMemo(() => {
