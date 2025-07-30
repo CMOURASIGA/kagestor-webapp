@@ -16,6 +16,15 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/api/cards', async (req, res) => {
+  // Adicionado para depuração
+  if (!process.env.KANBANIZE_API_TOKEN) {
+    console.error('A variável de ambiente KANBANIZE_API_TOKEN não está definida.');
+    return res.status(500).json({ 
+      error: 'Configuração de servidor incompleta', 
+      details: 'A chave da API Kanbanize não foi fornecida no arquivo .env do servidor.' 
+    });
+  }
+  
   try {
     const params = new URLSearchParams({
       board_ids: '1',
