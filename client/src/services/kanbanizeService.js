@@ -6,7 +6,7 @@ async function getCards() {
   try {
     const response = await axios.get(`${API_BASE_URL}/api/cards`);
     console.log('Data received from /api/cards:', response.data);
-    return response.data?.data || []; // garantir que seja um array
+    return response.data?.data?.data || []; // Corrigido para extrair o array de cards
   } catch (error) {
     console.error('Erro ao buscar cards:', error);
     return [];
