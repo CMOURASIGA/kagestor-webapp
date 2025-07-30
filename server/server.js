@@ -3,6 +3,7 @@ const axios = require('axios');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const OpenAI = require('openai');
 
 require('dotenv').config();
 const app = express();
@@ -11,6 +12,11 @@ const PORT = process.env.PORT || 3001;
 // Carregar usuários do arquivo JSON
 const usuariosPath = path.join(__dirname, 'usuarios-fake.json');
 const usuarios = JSON.parse(fs.readFileSync(usuariosPath, 'utf8'));
+
+// Configuração do OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 app.use(cors());
 app.use(express.json());
@@ -100,6 +106,54 @@ app.get('/api/users', (req, res) => {
     res.status(500).json({ error: 'Erro no servidor ao buscar usuários' });
   }
 });
+
+// Novo endpoint para gerar resumo com OpenAI
+app.post('/api/summarize', async (req, res) => {
+  const { card } = req.body;
+
+  if (!card) {
+    return res.status(400).json({ error: 'Dados do card não fornecidos.' });
+  }
+  
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(500).json({ error: 'A chave da API da OpenAI não foi configurada no servidor.' });
+  }
+
+  try {
+    // Remove tags HTML da descrição para limpar o texto
+    const cleanDescription = card.description ? card.description.replace(/<[^>]*>/g, ' ') : 'Nenhuma';
+
+    const prompt = `
+      Você é um assistente de gerenciamento de projetos. Sua tarefa é criar um resumo claro e conciso de um card do Kanban.
+      A resposta deve ser em português do Brasil.
+      O resumo deve ser fácil de entender para qualquer pessoa da equipe, focando nos pontos mais importantes.
+      
+      Aqui estão os detalhes do card:
+      - Título: ${card.title}
+      - Descrição: ${cleanDescription}
+      - Prioridade: ${card.priority || 'Não definida'}
+      - Responsável: ${card.owner_username || 'Não atribuído'}
+      - Prazo Final: ${card.deadline ? new Date(card.deadline).toLocaleDateString('pt-BR') : 'Não definido'}
+
+      Com base nesses dados, gere um resumo objetivo em um único parágrafo.
+    `;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "system", content: prompt }],
+      temperature: 0.5, // Um pouco de criatividade, mas ainda focado
+      max_tokens: 150, // Limita o tamanho do resumo
+    });
+
+    const summary = completion.choices[0].message.content.trim();
+    res.json({ summary });
+
+  } catch (error) {
+    console.error('Erro ao gerar resumo com OpenAI:', error);
+    res.status(500).json({ error: 'Falha ao se comunicar com a API da OpenAI.' });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
