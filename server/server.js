@@ -33,7 +33,7 @@ app.get('/api/cards', async (req, res) => {
     const cards = response.data.data;
 
     const cardsComUsuarios = cards.map(card => {
-      const usuario = usuarios.find(u => u.user_id === card.owner_user_id);
+      const usuario = usuarios.find(u => u.id === card.owner_user_id);
       return {
         ...card,
         owner_username: usuario ? usuario.username : 'N/A'
@@ -43,8 +43,23 @@ app.get('/api/cards', async (req, res) => {
     res.json({ data: cardsComUsuarios });
 
   } catch (error) {
-    console.error('Erro ao buscar cards Kanbanize:', error.message);
-    res.status(500).json({ error: 'Erro no servidor ao buscar cards' });
+    console.error('Erro detalhado ao buscar cards Kanbanize:', error);
+    if (error.response) {
+      // A requisição foi feita e o servidor respondeu com um status code fora do range 2xx
+      console.error('Data:', error.response.data);
+      console.error('Status:', error.response.status);
+      console.error('Headers:', error.response.headers);
+    } else if (error.request) {
+      // A requisição foi feita mas nenhuma resposta foi recebida
+      console.error('Request:', error.request);
+    } else {
+      // Algo aconteceu ao configurar a requisição que acionou um erro
+      console.error('Error', error.message);
+    }
+    res.status(500).json({ 
+      error: 'Erro no servidor ao buscar cards', 
+      details: error.message 
+    });
   }
 });
 
