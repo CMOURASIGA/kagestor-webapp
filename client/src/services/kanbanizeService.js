@@ -37,3 +37,15 @@ async function getBoardStructure() {
   }
 }
 
+
+
+// ❌ Função não utilizada e não exportada
+async function getCardDetails(cardId) {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/cards/${cardId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Erro ao buscar detalhes do card ${cardId}:`, error);
+    return null;
+  }
+}

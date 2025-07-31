@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Card from "../components/Card";
-import { fetchCards } from "../services/kanbanizeService";
-import { fetchUsers } from "../services/userService";
+import { getCards } from "../services/kanbanizeService";
+import { getUsers } from "../services/userService";
 
 function Board() {
   const [cards, setCards] = useState([]);
@@ -10,8 +10,8 @@ function Board() {
   const [columns, setColumns] = useState([]);
 
   useEffect(() => {
-    fetchCards().then(setCards);
-    fetchUsers().then(setUsers);
+    getCards().then(setCards);
+    getUsers().then(setUsers);
     setColumns([
       { column_id: 1, name: "A Fazer" },
       { column_id: 2, name: "Em Andamento" },
