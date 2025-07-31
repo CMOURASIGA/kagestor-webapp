@@ -138,20 +138,19 @@ export default function Board() {
 
   const groupedCards = useMemo(() => {
     const grouped = {};
+    // Inicializa o objeto grouped com todas as colunas para manter a ordem
     columns.forEach(column => {
       grouped[column.column_id] = [];
     });
 
     filteredCards.forEach(card => {
-      if (!grouped[card.column_id]) {
-        grouped[card.column_id] = [];
+      if (!grouped[card.column_id]) grouped[card.column_id] = [];
+    
+        grouped[card.column_id].push(card);
       }
-      grouped[card.column_id].push(card);
     });
-
     return grouped;
   }, [columns, filteredCards]);
-
 
   if (loading) {
     return <LoadingSpinner />;
@@ -200,3 +199,4 @@ export default function Board() {
     </div>
   );
 
+export default Board;
