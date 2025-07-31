@@ -198,4 +198,4 @@ export default function Board() {
       <CardDetailsModal card={selectedCard} onClose={handleCloseModal} />
     </div>
   );
-}
+
