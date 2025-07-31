@@ -24,4 +24,16 @@ async function getUsers() {
 }
 
 // ✅ Exportações necessárias
-export { getCards, getUsers };
+export { getCards, getUsers, getBoardStructure };
+
+async function getBoardStructure() {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/board-structure`);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar a estrutura do quadro:', error);
+    // Lançar o erro para que o componente que chama possa tratá-lo
+    throw error;
+  }
+}
+

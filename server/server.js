@@ -33,8 +33,6 @@ app.get('/api/cards', async (req, res) => {
   
   try {
     const params = new URLSearchParams({
-      board_ids: '1',
-      workflow_ids: '2',
       fields: 'card_id,title,description,custom_id,owner_user_id,type_id,size,priority,color,deadline,reporter,created_at,revision,last_modified,in_current_position_since,board_id,workflow_id,column_id,lane_id,section,position,last_column_id,last_lane_id,version_id,archived_at,reason_id,discard_comment,discarded_at,is_blocked,block_reason,current_block_time,current_logged_time,current_cycle_time,child_card_stats,finished_subtask_count,unfinished_subtask_count,comment_count,first_request_time,first_start_time,first_end_time,last_request_time,last_start_time,last_end_time',
       expand: 'custom_fields,stickers,tag_ids,co_owner_ids,watcher_ids,attachments,cover_image,checked_column_checklist_items,initiative_details,annotations,subtasks,linked_cards,transitions,block_times,logged_times,logged_times_for_child_cards,lead_time_per_column,outcomes,outcome_current_values'
     });
@@ -124,10 +122,19 @@ app.post('/api/summarize', async (req, res) => {
     const cleanDescription = card.description ? card.description.replace(/<[^>]*>/g, ' ') : 'Nenhuma';
 
     const prompt = `
-      Você é um assistente de gerenciamento de projetos. Sua tarefa é criar um resumo claro e conciso de um card do Kanban.
-      A resposta deve ser em português do Brasil.
-      O resumo deve ser fácil de entender para qualquer pessoa da equipe, focando nos pontos mais importantes.
-      
+      Você é um assistente de gerenciamento de projetos experiente. Sua tarefa é analisar um card do Kanban e fornecer um resumo claro e, mais importante, um direcionamento estratégico para a equipe.
+      A resposta deve ser em português do Brasil e dividida em duas seções: "Resumo do Card" e "Direcionamento".
+
+      **Resumo do Card:**
+      - Apresente um resumo conciso do card, focando nos pontos mais importantes para que qualquer membro da equipe possa entender rapidamente o objetivo da tarefa.
+
+      **Direcionamento:**
+      - Com base nos dados do card, sugira os próximos passos.
+      - Se o card estiver em uma coluna inicial (como "Backlog" ou "Entendimento"), sugira o que é necessário para movê-lo para a próxima etapa.
+      - Se o card estiver "Em Andamento", incentive a equipe a manter o foco e pergunte sobre possíveis impedimentos.
+      - Se o card estiver próximo ao prazo, destaque a urgência.
+      - Seja proativo e ofereça insights que possam ajudar a equipe a concluir a tarefa com mais eficiência.
+
       Aqui estão os detalhes do card:
       - Título: ${card.title}
       - Descrição: ${cleanDescription}
@@ -135,7 +142,7 @@ app.post('/api/summarize', async (req, res) => {
       - Responsável: ${card.owner_username || 'Não atribuído'}
       - Prazo Final: ${card.deadline ? new Date(card.deadline).toLocaleDateString('pt-BR') : 'Não definido'}
 
-      Com base nesses dados, gere um resumo objetivo em um único parágrafo.
+      Gere a resposta seguindo estritamente as seções "Resumo do Card" e "Direcionamento".
     `;
 
     const completion = await openai.chat.completions.create({
@@ -151,6 +158,44 @@ app.post('/api/summarize', async (req, res) => {
   } catch (error) {
     console.error('Erro ao gerar resumo com OpenAI:', error);
     res.status(500).json({ error: 'Falha ao se comunicar com a API da OpenAI.' });
+  }
+});
+
+app.get('/api/board-structure', async (req, res) => {
+  if (!process.env.KANBANIZE_API_TOKEN) {
+    return res.status(500).json({ error: 'A chave da API Kanbanize não foi configurada.' });
+  }
+
+  try {
+    const boardId = 1; // O ID do quadro é 1, conforme usado na busca de cards
+    const headers = { apikey: process.env.KANBANIZE_API_TOKEN };
+
+    // Busca as colunas do quadro
+    const columnsResponse = await axios.get(
+      `https://cnc.kanbanize.com/api/v2/boards/${boardId}/columns`,
+      { headers }
+    );
+
+    // Busca os workflows do quadro
+    const workflowsResponse = await axios.get(
+      `https://cnc.kanbanize.com/api/v2/boards/${boardId}/workflows`,
+      { headers }
+    );
+
+    // Estrutura a resposta
+    const boardStructure = {
+      columns: columnsResponse.data.data,
+      workflows: workflowsResponse.data.data,
+    };
+
+    res.json(boardStructure);
+
+  } catch (error) {
+    console.error('Erro ao buscar a estrutura do quadro Kanbanize:', error.message);
+    res.status(500).json({ 
+      error: 'Erro no servidor ao buscar a estrutura do quadro',
+      details: error.response?.data || error.message
+    });
   }
 });
 

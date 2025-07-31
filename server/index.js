@@ -14,7 +14,7 @@ app.use(cors());
 // Endpoint para cards do Kanbanize (já existente)
 app.get('/api/cards', async (req, res) => {
   try {
-    const response = await fetch('https://cnc.kanbanize.com/api/v2/boards/1/cards?workflow_id=2', {
+    const response = await fetch('https://cnc.kanbanize.com/api/v2/boards/1/cards', {
       headers: {
         accept: 'application/json',
         apikey: process.env.KANBANIZE_API_TOKEN

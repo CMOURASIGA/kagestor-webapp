@@ -1,15 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { getCards } from '../services/kanbanizeService';
+import { getCards, getBoardStructure, getUsers } from '../services/kanbanizeService';
 import Card from '../components/Card';
 import CardDetailsModal from '../components/CardDetailsModal';
 import FilterBar from '../components/FilterBar';
-
-// Definição das colunas com base no column_id
-const columnsConfig = {
-  'A Fazer': 6,
-  'Em Andamento': 7,
-  'Concluído': 9,
-};
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-screen">
@@ -55,6 +48,7 @@ const Column = ({ title, cards, onCardClick }) => (
 
 export default function Board() {
   const [cards, setCards] = useState([]);
+  const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
@@ -69,24 +63,24 @@ export default function Board() {
     setLoading(true);
     setError(false);
     try {
-      // Usando Promise.all para buscar dados em paralelo
-      const [cardsData, usersData] = await Promise.all([
+      const [cardsData, usersData, boardStructure] = await Promise.all([
         getCards(),
-        fetch('http://localhost:3001/api/users').then(res => {
-          if (!res.ok) throw new Error('A resposta da rede não foi ok para buscar usuários');
-          return res.json();
-        })
+        getUsers(),
+        getBoardStructure(),
       ]);
       
-      console.log("Cards fetched in Board:", cardsData);
       setCards(cardsData || []);
       setAllUsers(usersData || []);
+
+      if (boardStructure && boardStructure.columns) {
+        // Ordena as colunas pela posição
+        const sortedColumns = boardStructure.columns.sort((a, b) => a.position - b.position);
+        setColumns(sortedColumns);
+      }
 
     } catch (err) {
       console.error('❌ Error fetching data in Board component:', err);
       setError(true);
-      setCards([]);
-      setAllUsers([]);
     } finally {
       setLoading(false);
     }
@@ -108,10 +102,8 @@ export default function Board() {
     fetchData();
   };
 
-  // Filtros e responsáveis disponíveis
   const availableAssignees = allUsers;
 
-  // Cards filtrados
   const filteredCards = useMemo(() => {
     return cards.filter(card => {
       const matchesSearch = !searchTerm || 
@@ -133,19 +125,20 @@ export default function Board() {
     setAssigneeFilter('');
   };
 
-  // Agrupa os cards filtrados por coluna
-  const groupedCards = Object.fromEntries(
-    Object.keys(columnsConfig).map(key => [key, []])
-  );
+  const groupedCards = useMemo(() => {
+    const grouped = {};
+    // Inicializa o objeto grouped com todas as colunas para manter a ordem
+    columns.forEach(column => {
+      grouped[column.column_id] = [];
+    });
 
-  filteredCards.forEach(card => {
-    const columnName = Object.keys(columnsConfig).find(
-      key => columnsConfig[key] === card.column_id
-    );
-    if (columnName) {
-      groupedCards[columnName].push(card);
-    }
-  });
+    filteredCards.forEach(card => {
+      if (grouped[card.column_id]) {
+        grouped[card.column_id].push(card);
+      }
+    });
+    return grouped;
+  }, [columns, filteredCards]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -180,9 +173,14 @@ export default function Board() {
         onClearFilters={handleClearFilters}
       />
       
-      <main className="flex gap-4 overflow-x-auto pb-4">
-        {Object.entries(groupedCards).map(([title, items]) => (
-          <Column key={title} title={title} cards={items} onCardClick={handleCardClick} />
+      <main className="flex flex-col md:flex-row gap-4 overflow-x-auto pb-4">
+        {columns.map(column => (
+          <Column 
+            key={column.column_id} 
+            title={column.name} 
+            cards={groupedCards[column.column_id] || []} 
+            onCardClick={handleCardClick} 
+          />
         ))}
       </main>
       <CardDetailsModal card={selectedCard} onClose={handleCloseModal} />
