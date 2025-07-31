@@ -1,61 +1,70 @@
 
 import React, { useEffect, useState, useMemo } from "react";
-import Card from "../components/Card";
-import { getCards } from "../services/kanbanizeService";
-import { getUsers } from "../services/userService";
+import { fetchCards } from "../services/kanbanizeService";
+import { fetchUsers } from "../services/userService";
 
-function Board() {
+const Board = () => {
   const [cards, setCards] = useState([]);
   const [users, setUsers] = useState([]);
-  const [columns, setColumns] = useState([]);
 
   useEffect(() => {
-    getCards().then(setCards);
-    getUsers().then(setUsers);
-    setColumns([
-      { column_id: 1, name: "A Fazer" },
-      { column_id: 2, name: "Em Andamento" },
-      { column_id: 3, name: "Concluído" },
-      { column_id: 4, name: "Aguardando" },
-      { column_id: 5, name: "Validação" },
-    ]);
+    const fetchData = async () => {
+      try {
+        const cardsData = await fetchCards();
+        setCards(cardsData);
+        const usersData = await fetchUsers();
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const filteredCards = useMemo(() => {
-    return cards.filter(card => card.workflow_id === 2);
-  }, [cards]);
+  const columns = useMemo(() => [
+    { id: 50, name: "A Fazer" },
+    { id: 51, name: "Em Andamento" },
+    { id: 52, name: "Concluído" },
+    { id: 53, name: "Aguardando" },
+    { id: 54, name: "Validação" },
+  ], []);
 
   const groupedCards = useMemo(() => {
     const grouped = {};
-    columns.forEach(column => {
-      grouped[column.column_id] = [];
+    columns.forEach(col => {
+      grouped[col.id] = [];
     });
-
-    filteredCards.forEach(card => {
-      if (!grouped[card.column_id]) {
-        grouped[card.column_id] = [];
+    cards.forEach(card => {
+      if (grouped[card.column_id]) {
+        grouped[card.column_id].push(card);
       }
-      grouped[card.column_id].push(card);
     });
-
     return grouped;
-  }, [columns, filteredCards]);
+  }, [columns, cards]);
+
+  const getUserNameById = (userId) => {
+    const user = users.find(user => user.id === userId);
+    return user ? user.name : "Desconhecido";
+  };
 
   return (
-    <div className="p-4">
+    <div style={{ display: "flex", gap: "16px", padding: "20px" }}>
       {columns.map(column => (
-        <div key={column.column_id} className="mb-4">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">{column.name}</h2>
-          <div className="grid gap-2">
-            {groupedCards[column.column_id] &&
-              groupedCards[column.column_id].map(card => (
-                <Card key={card.card_id} card={card} users={users} />
-              ))}
-          </div>
+        <div key={column.id} style={{ flex: 1 }}>
+          <h2>{column.name}</h2>
+          {groupedCards[column.id]?.map(card => (
+            <div key={card.taskid} style={{ border: "1px solid #ccc", padding: "8px", marginBottom: "8px" }}>
+              <strong>{card.title}</strong>
+              <p>ID: {card.taskid}</p>
+              <p>Responsável: {getUserNameById(card.assignee_user_id)}</p>
+              <p>Status: {card.status}</p>
+            </div>
+          ))}
         </div>
       ))}
     </div>
   );
-}
+};
 
 export default Board;
