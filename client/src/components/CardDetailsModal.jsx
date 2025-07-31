@@ -40,7 +40,7 @@ const Summary = ({ card }) => {
       {isLoading ? (
         <p className="text-sm text-blue-700 animate-pulse">Gerando resumo...</p>
       ) : (
-        <p className="text-sm text-blue-900">{summary}</p>
+        <p className="text-sm text-blue-900 whitespace-pre-wrap">{summary}</p>
       )}
     </div>
   );
@@ -70,7 +70,7 @@ export default function CardDetailsModal({ card, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] sm:max-h-[80vh] overflow-y-auto p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex justify-between items-start mb-4">
