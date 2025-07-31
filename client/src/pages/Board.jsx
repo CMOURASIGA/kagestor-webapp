@@ -144,7 +144,8 @@ export default function Board() {
     });
 
     filteredCards.forEach(card => {
-      if (grouped[card.column_id]) {
+      if (!grouped[card.column_id]) grouped[card.column_id] = [];
+    
         grouped[card.column_id].push(card);
       }
     });
