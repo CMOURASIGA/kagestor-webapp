@@ -104,13 +104,24 @@ export default function Board() {
 
   const availableAssignees = allUsers;
 
+  // Mapeia o valor numérico da prioridade para o texto correspondente
+  const priorityMap = {
+    4: 'Critical',
+    3: 'High',
+    2: 'Medium',
+    1: 'Low',
+    0: 'Lowest',
+  };
+
   const filteredCards = useMemo(() => {
     return cards.filter(card => {
       const matchesSearch = !searchTerm || 
         card.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         card.description?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesPriority = !priorityFilter || card.priority === priorityFilter;
+      // Compara a prioridade usando o mapa
+      const cardPriorityText = priorityMap[card.priority];
+      const matchesPriority = !priorityFilter || cardPriorityText === priorityFilter;
       
       const allAssignees = [card.owner_user_id, ...(card.co_owner_ids || [])];
       const matchesAssignee = !assigneeFilter || allAssignees.includes(Number(assigneeFilter));
