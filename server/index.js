@@ -21,7 +21,8 @@ app.get('/api/cards', async (req, res) => {
       }
     });
     const data = await response.json();
-    res.json(data);
+    const filtered = data.filter(card => card.workflow_id === 2);
+    res.json(filtered);
   } catch (error) {
     console.error('Erro ao buscar cards:', error);
     res.status(500).json({ error: 'Erro ao buscar cards do Kanbanize' });
@@ -38,7 +39,8 @@ app.get('/api/users', async (req, res) => {
       }
     });
     const data = await response.json();
-    res.json(data);
+    const filtered = data.filter(card => card.workflow_id === 2);
+    res.json(filtered);
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
     res.status(500).json({ error: 'Erro ao buscar usuários do Kanbanize' });
@@ -48,3 +50,4 @@ app.get('/api/users', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
 });
+
