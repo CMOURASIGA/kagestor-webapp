@@ -63,6 +63,15 @@ const Board = () => {
     return user ? user.name : "Desconhecido";
   };
 
+  if (error) {
+    return (
+      <div style={{ color: 'red', padding: '20px' }}>
+        <h2>Erro ao Carregar o Quadro</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", gap: "16px", padding: "20px" }}>
       {columns.map(column => (
