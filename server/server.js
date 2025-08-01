@@ -46,21 +46,14 @@ app.get('/api/cards', async (req, res) => {
     // Log da estrutura da resposta para depuração
     console.log('Estrutura da resposta da API Kanbanize:', JSON.stringify(response.data, null, 2));
     
-    // Extrair dados de forma mais robusta
-    let cardsData = [];
-    
-    if (response.data && response.data.data) {
-      if (Array.isArray(response.data.data)) {
-        cardsData = response.data.data;
-      } else if (response.data.data.data && Array.isArray(response.data.data.data)) {
-        cardsData = response.data.data.data;
-      } else {
-        console.warn('Estrutura de dados inesperada na resposta da API Kanbanize');
-        cardsData = [];
-      }
-    } else {
-      console.warn('Resposta da API Kanbanize não contém dados esperados');
-      cardsData = [];
+    // A API Kanbanize V2 pode retornar os cards dentro de um objeto `data` aninhado.
+    // Esta abordagem garante que estamos pegando o array de cards de forma segura.
+    const cardsData = response.data?.data?.data || response.data?.data || [];
+
+    if (!Array.isArray(cardsData)) {
+      console.error('A resposta da API Kanbanize não contém um array de cards em "data.data" ou "data".', response.data);
+      // Retorna um array vazio para não quebrar o cliente.
+      return res.json({ data: [] });
     }
 
     console.log(`Número de cards encontrados: ${cardsData.length}`);

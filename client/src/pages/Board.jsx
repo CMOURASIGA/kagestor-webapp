@@ -1,45 +1,60 @@
 
 import React, { useEffect, useState, useMemo } from "react";
-import { getCards } from "../services/kanbanizeService";
+import { getCards, getBoardStructure } from "../services/kanbanizeService";
 import { getUsers } from "../services/userService";
 
 const Board = () => {
   const [cards, setCards] = useState([]);
   const [users, setUsers] = useState([]);
+  const [columns, setColumns] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const cardsData = await getCards();
+        // Buscar dados em paralelo para otimizar o carregamento
+        const [cardsData, usersData, boardData] = await Promise.all([
+          getCards(),
+          getUsers(),
+          getBoardStructure(),
+        ]);
+
         setCards(cardsData);
-        const usersData = await getUsers();
         setUsers(usersData);
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
+        
+        // A API retorna colunas e workflows, vamos usar as colunas
+        if (boardData && boardData.columns) {
+          // Mapeia para o formato esperado pelo componente [{ id, name }]
+          const formattedColumns = boardData.columns.map(col => ({ id: col.column_id, name: col.name }));
+          setColumns(formattedColumns);
+        } else {
+          setColumns([]); // Define como vazio se não houver colunas
+        }
+
+      } catch (err) {
+        console.error("Erro ao buscar dados:", err);
+        setError("Falha ao carregar o quadro. Verifique a conexão e a configuração.");
       }
     };
 
     fetchData();
   }, []);
 
-  const columns = useMemo(() => [
-    { id: 50, name: "A Fazer" },
-    { id: 51, name: "Em Andamento" },
-    { id: 52, name: "Concluído" },
-    { id: 53, name: "Aguardando" },
-    { id: 54, name: "Validação" },
-  ], []);
-
   const groupedCards = useMemo(() => {
+    if (!columns.length) return {}; // Retorna objeto vazio se não houver colunas
+
     const grouped = {};
     columns.forEach(col => {
+      // Usa o ID da coluna para criar a chave
       grouped[col.id] = [];
     });
+
     cards.forEach(card => {
       if (grouped[card.column_id]) {
         grouped[card.column_id].push(card);
       }
     });
+
     return grouped;
   }, [columns, cards]);
 
