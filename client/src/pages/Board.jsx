@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
-import { fetchCards } from "../services/kanbanizeService";
-import { fetchUsers } from "../services/userService";
+import { getCards } from "../services/kanbanizeService";
+import { getUsers } from "../services/userService";
 
 const Board = () => {
   const [cards, setCards] = useState([]);
@@ -10,9 +10,9 @@ const Board = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const cardsData = await fetchCards();
+        const cardsData = await getCards();
         setCards(cardsData);
-        const usersData = await fetchUsers();
+        const usersData = await getUsers();
         setUsers(usersData);
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
